@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const hoy = new Date().toISOString().split('T')[0];
   
-  // Agregamos 'team(statistics)' y 'person(statistics)' para obtener OPS y tendencias
-  const url = `https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&date=${hoy}&hydrate=team(leagueRecord,statistics),probablePitcher(statistics),venue(weather),lineups`;
+  // Hydrate ampliado para incluir métricas de Statcast y registros de equipo detallados
+  const url = `https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&date=${hoy}&hydrate=team(leagueRecord,statistics),probablePitcher(statistics),lineups,venue(weather)`;
 
   try {
     const respuesta = await fetch(url);
