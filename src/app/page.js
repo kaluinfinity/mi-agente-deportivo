@@ -1,64 +1,46 @@
-import Image from "next/image";
+"use client"; // Esto permite que la página sea interactiva
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+  const [partidos, setPartidos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    // Esta función llama a nuestra API interna
+    fetch('/api/partidos')
+      .then(res => res.json())
+      .then(data => {
+        setPartidos(data);
+        setCargando(false);
+      });
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="flex flex-col items-center min-h-screen bg-slate-900 text-white p-6">
+      <header className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-blue-500">⚾ MLB Stats Agent</h1>
+        <p className="text-slate-400">Cartelera para hoy</p>
+      </header>
+
+      <main className="w-full max-w-md space-y-4">
+        {cargando ? (
+          <p className="text-center animate-pulse">Consultando a la liga...</p>
+        ) : partidos.length > 0 ? (
+          partidos.map((juego) => (
+            <div key={juego.gamePk} className="p-4 bg-slate-800 rounded-xl border border-slate-700 shadow-lg">
+              <div className="flex justify-between items-center text-lg font-semibold">
+                <span>{juego.teams.away.team.name}</span>
+                <span className="text-sm text-slate-500 font-normal">@</span>
+                <span>{juego.teams.home.team.name}</span>
+              </div>
+              <div className="mt-2 text-xs text-blue-400 font-mono">
+                Estado: {juego.status.abstractGameState}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-slate-500">No hay partidos programados para hoy.</p>
+        )}
       </main>
     </div>
   );
