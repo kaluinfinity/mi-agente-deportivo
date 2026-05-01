@@ -12,135 +12,127 @@ export default function Home() {
         setPartidos(data);
         setCargando(false);
       })
-      .catch(err => console.error("Error cargando partidos:", err));
+      .catch(err => console.error("Error:", err));
   }, []);
 
-  const obtenerAnalisis = (juego) => {
+  const obtenerAnalisisPro = (juego) => {
     const v = juego.teams.away;
     const l = juego.teams.home;
+    const pV = juego.teams.away.probablePitcher;
+    const pL = juego.teams.home.probablePitcher;
+
+    // 1. Poder del Pitcheo (ERA - Entre más bajo mejor)
+    // Si no hay pitcher anunciado, usamos un promedio de 4.50
+    const eraV = parseFloat(pV?.stats?.find(s => s.group.displayName === 'pitching')?.stats?.era) || 4.50;
+    const eraL = parseFloat(pL?.stats?.find(s => s.group.displayName === 'pitching')?.stats?.era) || 4.50;
+
+    // 2. Récord de Equipos
     const pctV = parseFloat(v.leagueRecord.pct) || 0;
     const pctL = parseFloat(l.leagueRecord.pct) || 0;
 
-    const favorito = pctV > pctL ? v.team.name : l.team.name;
-    const diferencia = Math.abs(pctV - pctL);
-    let confianzaBase = 50 + (diferencia * 100);
-    const confianza = Math.min(Math.round(confianzaBase), 95);
+    // LÓGICA DE PREDICCIÓN (Puntaje: Pitcheo 60% + Récord 40%)
+    const scoreV = (pctV * 40) + ((10 - eraV) * 6);
+    const scoreL = (pctL * 40) + ((10 - eraL) * 6) + 2; // +2 por ventaja de local
 
-    const runline = diferencia > 0.10 
-      ? `${favorito} -1.5` 
-      : `${pctV < pctL ? v.team.name : l.team.name} +1.5`;
+    const favorito = scoreV > scoreL ? v.team.name : l.team.name;
+    const confianza = Math.min(Math.round(55 + Math.abs(scoreV - scoreL)), 96);
 
-    const promedioPuntos = (pctV + pctL) / 2;
-    const total = promedioPuntos > 0.52 ? "Altas (Over 8.5)" : "Bajas (Under 8.5)";
+    // Totales basados en ERA combinada
+    const eraCombinada = eraV + eraL;
+    const total = eraCombinada > 9.0 ? "Altas (Picheo Débil)" : "Bajas (Duelo de Ases)";
 
-    return { favorito, confianza, runline, total };
+    return { 
+      favorito, 
+      confianza, 
+      total, 
+      pitcherV: pV?.fullName || "Por anunciar", 
+      pitcherL: pL?.fullName || "Por anunciar",
+      eraV, 
+      eraL 
+    };
   };
 
-  const getLogoUrl = (teamId) => {
-    return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
-  };
+  const getLogoUrl = (teamId) => `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-slate-950 text-white p-4 font-sans">
-      <header className="text-center mt-8 mb-10">
-        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 italic tracking-tighter">
-          MLB PRO AGENT
-        </h1>
-        <p className="text-slate-500 text-[10px] mt-1 uppercase tracking-[0.3em] font-bold">Smart Betting Analytics</p>
+      <header className="text-center mt-6 mb-8">
+        <h1 className="text-4xl font-black text-blue-500 italic">MLB INTELLIGENCE</h1>
+        <p className="text-slate-500 text-[9px] uppercase tracking-[0.4em] font-bold">Deep Data Analysis v2.0</p>
       </header>
 
-      <main className="w-full max-w-lg space-y-6">
+      <main className="w-full max-w-lg space-y-8">
         {cargando ? (
-          <div className="flex flex-col items-center py-20">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-slate-500 text-xs font-mono uppercase tracking-widest">Inyectando datos...</p>
-          </div>
-        ) : partidos.length > 0 ? (
-          partidos.map((juego) => {
-            const analisis = obtenerAnalisis(juego);
-            return (
-              <div key={juego.gamePk} className="bg-slate-900 rounded-[2rem] overflow-hidden shadow-2xl border border-slate-800/50">
-                
-                <div className="px-6 py-3 bg-slate-800/30 flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                  <span>{juego.venue.name}</span>
-                  <span className="flex items-center"><span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>Live Feed</span>
-                </div>
+          <div className="text-center py-20 animate-pulse text-blue-400 font-mono text-xs">ANALIZANDO ROTACIÓN DE PITCHERS...</div>
+        ) : partidos.map((juego) => {
+          const ai = obtenerAnalisisPro(juego);
+          return (
+            <div key={juego.gamePk} className="bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-800 shadow-2xl">
+              
+              {/* Header: Estadio y Clima */}
+              <div className="px-6 py-3 bg-white/5 flex justify-between items-center text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                <span>{juego.venue.name}</span>
+                <span className="text-blue-400">Pitcher Matchup</span>
+              </div>
 
-                <div className="p-8 flex justify-between items-start bg-gradient-to-b from-transparent to-slate-900/50">
-                  {/* Equipo Visitante */}
-                  <div className="flex flex-col items-center w-2/5">
-                    <span className="text-[9px] font-black text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full mb-3 tracking-widest uppercase">Visitante</span>
-                    <div className="w-20 h-20 bg-white/5 p-3 rounded-3xl mb-3 flex items-center justify-center backdrop-blur-sm border border-white/10">
-                      <img 
-                        src={getLogoUrl(juego.teams.away.team.id)} 
-                        alt={juego.teams.away.team.name}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    <span className="font-black text-center text-sm leading-tight h-10 flex items-center capitalize">{juego.teams.away.team.name}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {juego.teams.away.leagueRecord.wins}W - {juego.teams.away.leagueRecord.losses}L
-                    </span>
-                  </div>
-
-                  <div className="text-xs font-black text-slate-800 mt-16">VS</div>
-
-                  {/* Equipo Local */}
-                  <div className="flex flex-col items-center w-2/5">
-                    <span className="text-[9px] font-black text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full mb-3 tracking-widest uppercase">Local</span>
-                    <div className="w-20 h-20 bg-white/5 p-3 rounded-3xl mb-3 flex items-center justify-center backdrop-blur-sm border border-white/10">
-                      <img 
-                        src={getLogoUrl(juego.teams.home.team.id)} 
-                        alt={juego.teams.home.team.name}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    <span className="font-black text-center text-sm leading-tight h-10 flex items-center capitalize">{juego.teams.home.team.name}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {juego.teams.home.leagueRecord.wins}W - {juego.teams.home.leagueRecord.losses}L
-                    </span>
+              {/* Matchup de Equipos */}
+              <div className="p-8 flex justify-between items-start">
+                <div className="flex flex-col items-center w-2/5">
+                  <span className="text-[8px] font-bold text-blue-400 mb-2 uppercase italic tracking-tighter">Visitante</span>
+                  <img src={getLogoUrl(juego.teams.away.team.id)} className="w-16 h-16 mb-2 object-contain" />
+                  <span className="font-black text-[11px] text-center uppercase leading-tight mb-4">{juego.teams.away.team.name}</span>
+                  
+                  {/* Info del Pitcher */}
+                  <div className="text-center bg-black/40 p-2 rounded-xl border border-white/5 w-full">
+                    <p className="text-[7px] text-slate-500 uppercase font-black">Starter</p>
+                    <p className="text-[10px] font-bold text-white truncate w-full px-1">{ai.pitcherV}</p>
+                    <p className="text-[9px] text-blue-400 font-mono">ERA: {ai.eraV}</p>
                   </div>
                 </div>
 
-                <div className="bg-blue-600/5 p-6 border-t border-white/5">
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="flex items-center text-blue-400 font-black text-[10px] uppercase tracking-tighter">
-                      <span className="text-lg mr-2">🤖</span> AI PREDICTION
-                    </span>
-                    <div className="text-right">
-                        <p className="text-[10px] font-bold text-green-400 leading-none">{analisis.confianza}%</p>
-                        <p className="text-[8px] text-slate-500 uppercase font-black">Accuracy</p>
-                    </div>
-                  </div>
+                <div className="text-[10px] font-black text-slate-800 mt-20">VS</div>
 
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-white/5 shadow-inner">
-                      <p className="text-[8px] text-slate-500 uppercase font-black mb-1 tracking-widest">Runline</p>
-                      <p className="text-xs font-bold text-white">{analisis.runline}</p>
-                    </div>
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-white/5 shadow-inner">
-                      <p className="text-[8px] text-slate-500 uppercase font-black mb-1 tracking-widest">Totals</p>
-                      <p className="text-xs font-bold text-white">{analisis.total}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between bg-blue-500/10 p-3 rounded-xl">
-                    <p className="text-xs font-medium text-slate-300">Top Pick:</p>
-                    <p className="text-sm font-black text-blue-400">{analisis.favorito}</p>
+                <div className="flex flex-col items-center w-2/5">
+                  <span className="text-[8px] font-bold text-orange-400 mb-2 uppercase italic tracking-tighter">Local</span>
+                  <img src={getLogoUrl(juego.teams.home.team.id)} className="w-16 h-16 mb-2 object-contain" />
+                  <span className="font-black text-[11px] text-center uppercase leading-tight mb-4">{juego.teams.home.team.name}</span>
+                  
+                  {/* Info del Pitcher */}
+                  <div className="text-center bg-black/40 p-2 rounded-xl border border-white/5 w-full">
+                    <p className="text-[7px] text-slate-500 uppercase font-black">Starter</p>
+                    <p className="text-[10px] font-bold text-white truncate w-full px-1">{ai.pitcherL}</p>
+                    <p className="text-[9px] text-orange-400 font-mono">ERA: {ai.eraL}</p>
                   </div>
                 </div>
               </div>
-            );
-          })
-        ) : (
-          <div className="text-center py-20">
-            <p className="text-slate-600 italic font-serif tracking-widest uppercase text-xs">No active games scheduled</p>
-          </div>
-        )}
+
+              {/* ANALISIS DE IA */}
+              <div className="bg-gradient-to-r from-blue-600/10 to-transparent p-6 border-t border-white/5">
+                <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center text-blue-400 font-black text-[10px] uppercase">
+                        <span className="text-lg mr-2">🎯</span> AI Pick: {ai.favorito}
+                    </div>
+                    <span className="text-[10px] font-black bg-blue-600 px-2 py-1 rounded text-white">{ai.confianza}%</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-950/80 p-3 rounded-2xl border border-white/5 shadow-xl">
+                    <p className="text-[7px] text-slate-500 uppercase font-black mb-1">Total Prediction</p>
+                    <p className="text-[11px] font-bold text-green-400">{ai.total}</p>
+                  </div>
+                  <div className="bg-slate-950/80 p-3 rounded-2xl border border-white/5 shadow-xl">
+                    <p className="text-[7px] text-slate-500 uppercase font-black mb-1">Projection</p>
+                    <p className="text-[11px] font-bold text-white">Focus on Starter ERA</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </main>
 
-      <footer className="mt-16 mb-8 text-slate-700 text-[8px] text-center font-black uppercase tracking-[0.4em]">
-        Augusto Dev &bull; Neural Sports Lab &bull; 2026
+      <footer className="mt-12 mb-8 text-slate-700 text-[8px] text-center font-black uppercase tracking-[0.5em]">
+        Augusto Neural Engine &bull; 2026
       </footer>
     </div>
   );
