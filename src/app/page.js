@@ -22,15 +22,23 @@ export default function Home() {
     const pctVisitante = parseFloat(recordVisitante.pct);
     const pctLocal = parseFloat(recordLocal.pct);
 
+    // Calculamos una confianza basada en la diferencia de récords
+    // Si un equipo tiene .600 y otro .400, la confianza es mayor
+    const total = pctVisitante + pctLocal;
+    const confianzaLocal = Math.round((pctLocal / total) * 100);
+    const confianzaVisitante = 100 - confianzaLocal;
+
     if (pctVisitante > pctLocal) {
       return { 
         ganador: juego.teams.away.team.name, 
-        razon: `Mejor récord (${recordVisitante.wins}-${recordVisitante.losses})` 
+        confianza: confianzaVisitante,
+        razon: `Dominio estadístico (${recordVisitante.wins}-${recordVisitante.losses})` 
       };
     } else {
       return { 
         ganador: juego.teams.home.team.name, 
-        razon: `Ventaja local y récord (${recordLocal.wins}-${recordLocal.losses})` 
+        confianza: confianzaLocal,
+        razon: `Ventaja de casa y récord (${recordLocal.wins}-${recordLocal.losses})` 
       };
     }
   };
@@ -72,14 +80,28 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Sección de la IA */}
+                {/* Sección de la IA con Barra de Confianza */}
                 <div className="p-4 bg-blue-900/20 border-t border-blue-500/30">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-blue-400">🤖</span>
-                    <span className="text-sm font-bold text-blue-400 uppercase tracking-wider">Predicción del Agente</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-blue-400">🤖</span>
+                      <span className="text-sm font-bold text-blue-400 uppercase tracking-wider">Análisis IA</span>
+                    </div>
+                    <span className="text-xs font-bold text-green-400">{prediccion.confianza}% Confianza</span>
                   </div>
+                  
+                  {/* Barra de progreso */}
+                  <div className="w-full bg-slate-700 h-2 rounded-full mb-3 overflow-hidden">
+                    <div 
+                      className="bg-blue-500 h-full transition-all duration-1000" 
+                      style={{ width: `${prediccion.confianza}%` }}
+                    ></div>
+                  </div>
+
                   <p className="text-sm">Favorito: <span className="text-green-400 font-bold">{prediccion.ganador}</span></p>
-                  <p className="text-xs text-slate-400 mt-1 italic">Razón: {prediccion.razon}</p>
+                  <p className="text-[10px] text-slate-500 mt-1 uppercase italic tracking-tighter">
+                    Fundamento: {prediccion.razon}
+                  </p>
                 </div>
               </div>
             );
