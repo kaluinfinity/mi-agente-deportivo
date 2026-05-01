@@ -36,7 +36,6 @@ export default function Home() {
     return { favorito, confianza, runline, total };
   };
 
-  // Función para obtener la URL del logo oficial de la MLB
   const getLogoUrl = (teamId) => {
     return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
   };
@@ -67,9 +66,10 @@ export default function Home() {
                   <span className="flex items-center"><span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>Live Feed</span>
                 </div>
 
-                <div className="p-8 flex justify-between items-center bg-gradient-to-b from-transparent to-slate-900/50">
+                <div className="p-8 flex justify-between items-start bg-gradient-to-b from-transparent to-slate-900/50">
                   {/* Equipo Visitante */}
                   <div className="flex flex-col items-center w-2/5">
+                    <span className="text-[9px] font-black text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full mb-3 tracking-widest uppercase">Visitante</span>
                     <div className="w-20 h-20 bg-white/5 p-3 rounded-3xl mb-3 flex items-center justify-center backdrop-blur-sm border border-white/10">
                       <img 
                         src={getLogoUrl(juego.teams.away.team.id)} 
@@ -83,10 +83,11 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <div className="text-xs font-black text-slate-800">VS</div>
+                  <div className="text-xs font-black text-slate-800 mt-16">VS</div>
 
                   {/* Equipo Local */}
                   <div className="flex flex-col items-center w-2/5">
+                    <span className="text-[9px] font-black text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full mb-3 tracking-widest uppercase">Local</span>
                     <div className="w-20 h-20 bg-white/5 p-3 rounded-3xl mb-3 flex items-center justify-center backdrop-blur-sm border border-white/10">
                       <img 
                         src={getLogoUrl(juego.teams.home.team.id)} 
