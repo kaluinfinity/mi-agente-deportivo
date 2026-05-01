@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const hoy = new Date().toISOString().split('T')[0];
-  // Hydrate masivo: estadísticas de temporada, tendencias y datos de localía
-  const url = `https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&date=${hoy}&hydrate=team(leagueRecord,statistics),probablePitcher(statistics),venue(weather),lineups`;
+  // Hidratamos con clima (weather) y venue para el Factor Parque
+  const url = `https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&date=${hoy}&hydrate=team(leagueRecord,statistics),probablePitcher(statistics),venue(weather,timezone),lineups`;
 
   try {
     const respuesta = await fetch(url);
