@@ -4,7 +4,7 @@ export async function GET() {
   // Obtenemos la fecha de hoy en formato YYYY-MM-DD
   const hoy = new Date().toISOString().split('T')[0];
   
-  const url = `https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&date=${hoy}`;
+ const url = `https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&date=${hoy}&hydrate=team(leagueRecord)`;
 
   try {
     const respuesta = await fetch(url);
